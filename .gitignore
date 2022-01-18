@@ -1,0 +1,4 @@
+*.png
+*.exe
+src/recovery/*
+src/output/*/*.csv

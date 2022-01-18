@@ -1,0 +1,91 @@
+#ifndef NEWTONSOLVER_DEFINED__
+#define NEWTONSOLVER_DEFINED__
+
+#include "Residual.hpp"
+#include "ResidualJacobian.hpp"
+#include "WeightedErrorNorm.hpp"
+
+using namespace arma;
+
+struct NewtonSolverReturnValue {
+	vec y;
+	int status = 0;
+};
+
+class NewtonSolver {
+public:
+	Residual* residual_func;
+	ResidualJacobian* residual_jacobian;
+	WeightedErrorNorm* err_norm;
+	vec y;
+	vec* y_prev;
+	mat jac;
+	vec f;
+	vec subtraction_term;
+	vec explicit_data;
+	double err;
+	double H;
+	int max_iter;
+	double tol;
+	int problem_dimension;
+	int status = 0;
+
+	NewtonSolver(Residual* residual_func_, ResidualJacobian* residual_jacobian_, int max_iter_, double tol_, int problem_dimension_, WeightedErrorNorm* err_norm_) {
+		residual_func = residual_func_;
+		residual_jacobian = residual_jacobian_;
+		max_iter = max_iter_;
+		tol = tol_;
+		problem_dimension = problem_dimension_;
+		err_norm = err_norm_;
+
+		jac = mat(problem_dimension, problem_dimension, fill::zeros);
+		f = vec(problem_dimension, fill::zeros);
+		subtraction_term = vec(problem_dimension, fill::zeros);
+		explicit_data = vec(problem_dimension, fill::zeros);
+	}
+
+	void solve(double t, vec* y_prev_, NewtonSolverReturnValue* ret) {
+		status = 0;
+		y_prev = y_prev_;
+		y = *y_prev_;
+
+		err = tol + 1.0;
+		int iter = 0;
+		residual_func->evaluate_explicit_data(&explicit_data);
+		while(err > tol && iter < max_iter) {
+			if (status == 0) {
+				calculate_subtraction_term(t);
+				y -= subtraction_term;
+				iter++;
+			}
+		}
+
+		if(iter == max_iter) {
+			//printf("!! Newton did not converge !!\n\tError: %.16f\n", err);
+			status = 1;
+		} else {
+			//printf("Convergence at iter: %d, error: %.16f\n", iter, err);
+		}
+
+		ret->y = y;
+		ret->status = status;
+	}
+
+	void calculate_subtraction_term(double t) {
+		residual_func->evaluate(t, &explicit_data, y_prev, &y, &f);
+		residual_jacobian->evaluate(t, &y, &jac);
+
+		if (arma::solve(subtraction_term, jac, f) == false) {
+			printf("Linear solver failure.\n");
+			status = 2;
+		} 
+
+		err = err_norm->compute_norm(subtraction_term);
+	}
+
+	void set_problem_dependent_data(double H_) {
+		H = H_;
+	}
+};
+
+#endif
