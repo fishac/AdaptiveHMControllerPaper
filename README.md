@@ -78,6 +78,8 @@ mpiexec -n [N] ./exe/MPIParameterOptimizationDriver.exe [Controller]
 to run. 
 Here, replace `[N]` with your chosen number of MPI ranks (such as `4`, with a minimum of `2`), and `[Controller]` with your chosen controller (such as `PIMR`).
 This will print progress to the screen.
+
 Note that this will take hours to days depending on number of MPI ranks used.
-Running with the ConstantConstant controller takes about 30 minutes with 36 MPI ranks.
-Running with the PIDMR controller takes about 20 hours with 216 MPI ranks.
+Running with the ConstantConstant controller takes about 4 minutes with 36 MPI ranks.
+Running with the PIDMR controller takes about 14 hours with 216 MPI ranks.
+These time estimates are only when evaluating with _one_ fast error measurement strategy (as was done for finding good controller parameters using only LASA-mean).
