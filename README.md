@@ -17,6 +17,8 @@ For our runs, we used [OpenMPI](https://www.open-mpi.org/).
 
 # Running
 
+All code is assumed to be run from inside the `src` folder.
+
 ### Generating true solutions
 
 True solution data has been uploaded to this repository in the respective `resources/[Problem]` folders.
