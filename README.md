@@ -21,7 +21,7 @@ All code is assumed to be run from inside the `src` folder.
 
 ### Generating true solutions
 
-True solution data has been uploaded to this repository in the respective `resources/[Problem]` folders.
+"True" solution data for problems without analytical solutions has been uploaded to this repository in the respective `resources/[Problem]` folders.
 If you wish to regenerate this data, run the Matlab files in `truesolutions`.
 
 ### Fast Error Measurement Strategy Testing
