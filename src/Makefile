@@ -30,4 +30,4 @@ MPIParameterOptimizationDriver.exe : ./drivers/ControllerParameterOptimization/M
 	$(MPICXX) $(CXXFLAGS) -o $@ $^ $(LIBS) $(INCS)
 
 clean :
-	\rm -rf *.txt *.exe *~ *.dSYM ./output/*/*.csv* ./postprocessing/output/*/plots/*.png ./postprocessing/output/*/data/*.csv 
+	\rm -rf *.txt *.exe ./exe/*.exe *~ *.dSYM ./output/*/*.csv* ./resources/OptimalitySearchh/*/*.exe ./postprocessing/output/*/plots/*.png ./postprocessing/output/*/data/*.csv 
