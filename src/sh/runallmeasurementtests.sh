@@ -1,7 +1,8 @@
 #!/bin/bash
 #Ex: ./sh/runallmeasurementtests.sh
 
-problems="Bicoupling Brusselator Lienard KPR Kaps FourBody3d Pleiades"
+#problems="Bicoupling Brusselator ForcedVanderPol KPR Kaps FourBody3d Pleiades"
+problems="ForcedVanderPol KPR"
 tols="1e-3 1e-5 1e-7"
 
 # Ensure all relevant optimal data exists.

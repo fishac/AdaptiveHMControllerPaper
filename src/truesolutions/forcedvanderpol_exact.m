@@ -1,4 +1,4 @@
-function lienard_exact()
+function forcedvanderpol_exact()
     clearvars
     
     dydt = @(t,y) dydt_func(t,y);
@@ -8,9 +8,9 @@ function lienard_exact()
     opts = odeset('RelTol',2.5e-14,'AbsTol',1e-14);
     [t,y] = ode15s(dydt,tspan,y0,opts);
     
-    filename = "./../resources/Lienard/Lienard_t.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_t.csv";
     writematrix(t, filename);
-    filename = "./../resources/Lienard/Lienard_truesol.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_truesol.csv";
     writematrix(y', filename);
     
     H = 2^-5;
@@ -19,9 +19,9 @@ function lienard_exact()
     opts = odeset('RelTol',2.5e-14,'AbsTol',1e-14);
     [t,y] = ode15s(dydt,tspan,y0,opts);
     
-    filename = "./../resources/Lienard/Lienard_fixed_t.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_fixed_t.csv";
     writematrix(t, filename);
-    filename = "./../resources/Lienard/Lienard_fixed_truesol.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_fixed_truesol.csv";
     writematrix(y', filename);
     
     tspan = linspace(0,25,11);
@@ -29,9 +29,9 @@ function lienard_exact()
     opts = odeset('RelTol',2.5e-14,'AbsTol',1e-14);
     [t,y] = ode15s(dydt,tspan,y0,opts);
     
-    filename = "./../resources/Lienard/Lienard_fixed_t_11.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_fixed_t_11.csv";
     writematrix(t, filename);
-    filename = "./../resources/Lienard/Lienard_fixed_truesol_11.csv";
+    filename = "./../resources/ForcedVanderPol/ForcedVanderPol_fixed_truesol_11.csv";
     writematrix(y', filename);
 end
 

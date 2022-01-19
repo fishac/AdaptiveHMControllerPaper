@@ -5,7 +5,7 @@ Granularity: entire solves
 
 import numpy as np 
 
-problems = ['Brusselator', 'KPR', 'Kaps', 'Pleiades', 'FourBody3d', 'Lienard']
+problems = ['Brusselator', 'KPR', 'Kaps', 'Pleiades', 'FourBody3d', 'ForcedVanderPol']
 explicit_problems = ['Pleiades', 'FourBody3d']
 
 mr_methods = ['MRIGARKERK33', 'MRIGARKIRK21a', 'MRIGARKERK45a', 'MRIGARKESDIRK34a']

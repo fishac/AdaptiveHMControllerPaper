@@ -9,7 +9,7 @@
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
 #include "KPRProblem.hpp"
-#include "LienardProblem.hpp"
+#include "ForcedVanderPolProblem.hpp"
 #include "OregonatorProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
@@ -273,13 +273,13 @@ void setup_and_evaluate_parameter_points(const char* controller_name, int n_para
 	BrusselatorProblem brusselator_problem;
 	KapsProblem kaps_problem;
 	KPRProblem kpr_problem;
-	LienardProblem lienard_problem;
+	ForcedVanderPolProblem forcedvanderpol_problem;
 	PleiadesProblem pleiades_problem;
 	FourBody3dProblem fourbody3d_problem;
 
 	Problem* problem_array[] = { 
 		&bicoupling_problem, &brusselator_problem, &kaps_problem,
-		&kpr_problem, &lienard_problem, &pleiades_problem, 
+		&kpr_problem, &forcedvanderpol_problem, &pleiades_problem, 
 		&fourbody3d_problem
 	};
 	int n_problem = 7;

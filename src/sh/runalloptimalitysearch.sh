@@ -6,7 +6,7 @@ explicit_methods="MRIGARKERK33 MRIGARKERK45a"
 sr_methods="HeunEulerERK BogackiShampineERK DormandPrinceERK"
 
 declare -A problems
-problems=(["Bicoupling"]=$all_methods ["Brusselator"]=$all_methods ["Kaps"]=$all_methods ["KPR"]=$all_methods ["Lienard"]=$all_methods ["Pleiades"]=$explicit_methods ["FourBody3d"]=$explicit_methods)
+problems=(["Bicoupling"]=$all_methods ["Brusselator"]=$all_methods ["Kaps"]=$all_methods ["KPR"]=$all_methods ["ForcedVanderPol"]=$all_methods ["Pleiades"]=$explicit_methods ["FourBody3d"]=$explicit_methods)
 
 declare -A problems_sr
 

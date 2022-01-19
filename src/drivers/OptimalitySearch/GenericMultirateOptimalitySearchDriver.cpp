@@ -3,22 +3,11 @@
 
 #include "MultirateOptimalitySearchDriver.hpp"
 #include "BicouplingProblem.hpp"
-#include "BicouplingLNProblem.hpp"
-#include "BicouplingDLProblem.hpp"
 #include "BrusselatorProblem.hpp"
-#include "BrusselatorDLProblem.hpp"
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
-#include "KapsLNProblem.hpp"
-#include "KapsDLProblem.hpp"
 #include "KPRProblem.hpp"
-#include "KPRDLProblem.hpp"
-#include "LienardProblem.hpp"
-#include "LienardLNProblem.hpp"
-#include "LienardDLProblem.hpp"
-#include "OregonatorProblem.hpp"
-#include "OregonatorLNProblem.hpp"
-#include "OregonatorDLProblem.hpp"
+#include "ForcedVanderPolProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "MRIGARKFixedMethod.hpp"
@@ -159,17 +148,8 @@ int main(int argc, char* argv[]) {
 		if(strcmp("Bicoupling",problem_name) == 0) {
 			BicouplingProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("BicouplingLN",problem_name) == 0) {
-			BicouplingLNProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("BicouplingDL",problem_name) == 0) {
-			BicouplingDLProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("Brusselator",problem_name) == 0) {
 			BrusselatorProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("BrusselatorDL",problem_name) == 0) {
-			BrusselatorDLProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("FourBody3d",problem_name) == 0) {
 			FourBody3dProblem problem;
@@ -177,35 +157,11 @@ int main(int argc, char* argv[]) {
 		} else if(strcmp("Kaps",problem_name) == 0) {
 			KapsProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("KapsLN",problem_name) == 0) {
-			KapsLNProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("KapsDL",problem_name) == 0) {
-			KapsDLProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("KPR",problem_name) == 0) {
 			KPRProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("KPRDL",problem_name) == 0) {
-			KPRDLProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("Lienard",problem_name) == 0) {
-			LienardProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("LienardLN",problem_name) == 0) {
-			LienardLNProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("LienardDL",problem_name) == 0) {
-			LienardDLProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("Oregonator",problem_name) == 0) {
-			OregonatorProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("OregonatorLN",problem_name) == 0) {
-			OregonatorLNProblem problem;
-			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("OregonatorDL",problem_name) == 0) {
-			OregonatorDLProblem problem;
+		} else if(strcmp("ForcedVanderPol",problem_name) == 0) {
+			ForcedVanderPolProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("Pleiades",problem_name) == 0) {
 			PleiadesProblem problem;

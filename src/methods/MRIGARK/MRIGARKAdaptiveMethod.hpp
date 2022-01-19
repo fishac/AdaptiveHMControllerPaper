@@ -4,7 +4,6 @@
 #include "MRIGARKAdaptiveStep.hpp"
 #include "AdaptiveStepMultiRateMethod.hpp"
 #include "MRIGARKAdaptiveStep.hpp"
-#include "MRIGARKFixedStep.hpp"
 #include "Problem.hpp"
 #include "WeightedErrorNorm.hpp"
 #include "Controller.hpp"
