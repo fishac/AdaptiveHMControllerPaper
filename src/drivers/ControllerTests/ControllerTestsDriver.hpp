@@ -198,7 +198,6 @@ public:
 		controller->reset();
 		err_norm->reset_weights();
 
-		printf("\n");
 		if (FastError::is_slow_type(measurement_type)) {
 			MRIGARKAdaptiveStepSlowMeasurement mrigark_step_sm(
 				coeffs, 
@@ -226,46 +225,6 @@ public:
 			method->solve(problem->t_0, H_0, M_0, &(problem->y_0), output_tspan, &mrigark_step_fm, controller, measurement_type, &ret);
 			process_multirate_method(&ret, problem, coeffs->name, controller->name, measurement_type, Y_true, tol_string);
 		}
-	}
-
-	void process_singlerate_method(AdaptiveSingleRateMethodReturnValue* ret, Problem* problem, const char* instance_name, const char* controller_name, mat* Y_true, const char* tol_string) {
-		std::vector<double> ts = ret->ts;
-		std::vector<double> hs = ret->hs;
-		std::vector<int> Ms(hs.size(), 0);
-		mat Y = ret->Y;
-		int status = ret->status;
-
-		double abs_err = abs((*Y_true)-Y).max();
-		double rel_err = norm((*Y_true)-Y,2)/norm((*Y_true),2);
-
-		if (status == 0) {	
-			printf("%s, %s. Total timesteps: %d, total microtimesteps: %d, total successful timesteps: %d, rel err: %.16f, abs err: %.16f\n", instance_name, controller_name, ret->total_timesteps, 0, ret->total_successful_timesteps, rel_err, abs_err);
-		} else if (status == 1) {
-			printf("%s, %s. Solver failure: h_new too small.\n", instance_name, controller_name);
-		} else if (status == 2) {
-			printf("%s, %s. Solver failure: h_new nonfinite.\n", instance_name, controller_name);
-		} else if (status == 3) {
-			printf("%s, %s. Solver failure: NewtonSolver linear solver failure.\n", instance_name, controller_name);
-		}
-
-		struct stats solve_stats = {
-			ret->total_timesteps, ret->total_successful_timesteps, 0, 0, rel_err, abs_err,
-			problem->full_function_evals, problem->fast_function_evals, problem->slow_function_evals,
-			problem->implicit_function_evals, problem->explicit_function_evals, 
-			problem->full_jacobian_evals, problem->fast_jacobian_evals, problem->slow_jacobian_evals, 
-			problem->implicit_jacobian_evals, status
-		};
-		save_stats(problem->name, instance_name, controller_name, tol_string, 0, &solve_stats);	
-
-		struct stats_over_time solve_stats_over_time = {
-			ret->ts, ret->hs, Ms,
-			ret->full_function_evals, ret->fast_function_evals, ret->slow_function_evals,
-			ret->implicit_function_evals, ret->explicit_function_evals,
-			ret->full_jacobian_evals, ret->fast_jacobian_evals, ret->slow_jacobian_evals,
-			ret->implicit_jacobian_evals
-		};
-		save_stats_over_time(problem->name, instance_name, controller_name, tol_string, 0, &solve_stats_over_time);
-		problem->reset_eval_counts();
 	}
 
 	void process_multirate_method(AdaptiveMultiRateMethodReturnValue* ret, Problem* problem, const char* instance_name, const char* controller_name, const char* measurement_type, mat* Y_true, const char* tol_string) {

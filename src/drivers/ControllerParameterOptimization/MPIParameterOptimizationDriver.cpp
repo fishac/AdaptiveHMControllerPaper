@@ -10,7 +10,6 @@
 #include "KapsProblem.hpp"
 #include "KPRProblem.hpp"
 #include "ForcedVanderPolProblem.hpp"
-#include "OregonatorProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "MRIGARKERK33Coefficients.hpp"
@@ -95,8 +94,6 @@ int main(int argc, char* argv[]) {
 
 		if(strcmp("ConstantConstant",controller_name) == 0) {
 			n_param = 2;
-		} else if(strcmp("LinearConstantIncomplete",controller_name) == 0) {
-			n_param = 3;
 		} else if(strcmp("LinearConstant",controller_name) == 0) {
 			n_param = 3;
 		} else if(strcmp("LinearLinear",controller_name) == 0) {
@@ -421,7 +418,6 @@ double evaluate_parameter_point(Problem** problem_array, int n_problem, MRIGARKC
 		copy_point(point,k1,3,0);
 		copy_point(point,k2,3,3);
 	}
-	printf("Worker %d working on k1: %.2f %.2f %.2f, k2: %.2f %.2f %.2f\n",myid,k1[0],k1[1],k1[2],k2[0],k2[1],k2[2]);
 	controller->set_parameters(k1, k2);
 
 	// Iterate over each problem
@@ -604,14 +600,6 @@ double** generate_parameter_space(double half_width, double* centers, double ste
 		param_ranges.push_back(param_range);
 	}
 
-	// DELETE THIS, JUST FOR VERIFICATION
-	//for (int i=0; i<n_points_1d; i++) {
-	//	for (int j=0; j<n_param; j++) {
-	//		printf("%.3f,",param_ranges[j][i]);
-	//	}
-	//	printf("\n");
-	//}
-
 	// Set total points in space
 	int n_points_total = 1;
 	for(int i=0; i<n_param; i++) {
@@ -654,14 +642,6 @@ double** generate_parameter_space(double half_width, double* centers, double ste
 		}
 		num_values_in_a_row = num_values_in_a_row*param_ranges[i].size();
 	}
-
-	// DELETE THIS, JUST FOR VERIFICATION
-	//for (int i=0; i<n_points_total; i++) {
-	//	for (int j=0; j<n_param; j++) {
-	//		printf("%.3f,",param_space[i][j]);
-	//	}
-	//	printf("\n");
-	//}
 
 	return param_space;
 };
@@ -724,8 +704,10 @@ void copy_point(double* src, double* dest, int n, int src_offset) {
 }
 
 ConstantConstantController get_CC_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController controller(
 		1.0,
 		1.0,
@@ -738,8 +720,10 @@ ConstantConstantController get_CC_controller() {
 }
 
 LinearConstantController get_LC_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -749,8 +733,11 @@ LinearConstantController get_LC_controller() {
 		k2_CC
 	);
 
-	double k1_LC[] = { 1.0, 1.0 };
-	double k2_LC[] = { 1.0 };
+	double* k1_LC = new double[2];
+	k1_LC[0] = 1.0;
+	k1_LC[1] = 1.0;
+	double* k2_LC = new double[1];
+	k2_LC[0] = 1.0;
 	LinearConstantController controller(
 		1.0,
 		1.0,
@@ -764,8 +751,10 @@ LinearConstantController get_LC_controller() {
 } 
 
 LinearLinearController get_LL_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -775,8 +764,12 @@ LinearLinearController get_LL_controller() {
 		k2_CC
 	);
 
-	double k1_LL[] = { 1.0, 1.0 };
-	double k2_LL[] = { 1.0, 1.0 };
+	double* k1_LL = new double[2];
+	k1_LL[0] = 1.0;
+	k1_LL[1] = 1.0;
+	double* k2_LL = new double[2];
+	k2_LL[0] = 1.0;
+	k2_LL[1] = 1.0;
 	LinearLinearController controller(
 		1.0,
 		1.0,
@@ -790,8 +783,10 @@ LinearLinearController get_LL_controller() {
 } 
 
 PIMRController get_PIMR_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -801,8 +796,12 @@ PIMRController get_PIMR_controller() {
 		k2_CC
 	);
 
-	double k1_PIMR[] = { 1.0, 1.0 };
-	double k2_PIMR[] = { 1.0, 1.0 };
+	double* k1_PIMR = new double[2];
+	k1_PIMR[0] = 1.0;
+	k1_PIMR[1] = 1.0;
+	double* k2_PIMR = new double[2];
+	k2_PIMR[0] = 1.0;
+	k2_PIMR[1] = 1.0;
 	PIMRController controller(
 		1.0,
 		1.0,
@@ -816,8 +815,10 @@ PIMRController get_PIMR_controller() {
 } 
 
 QuadraticQuadraticController get_QQ_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -827,8 +828,14 @@ QuadraticQuadraticController get_QQ_controller() {
 		k2_CC
 	);
 
-	double k1_QQ[] = { 1.0, 1.0, 1.0 };
-	double k2_QQ[] = { 1.0, 1.0, 1.0 };
+	double* k1_QQ = new double[3];
+	k1_QQ[0] = 1.0;
+	k1_QQ[1] = 1.0;
+	k1_QQ[2] = 1.0;
+	double* k2_QQ = new double[3];
+	k2_QQ[0] = 1.0;
+	k2_QQ[1] = 1.0;
+	k2_QQ[2] = 1.0;
 	QuadraticQuadraticController controller(
 		1.0,
 		1.0,
@@ -842,8 +849,10 @@ QuadraticQuadraticController get_QQ_controller() {
 } 
 
 PIDMRController get_PIDMR_controller() {
-	double k1_CC[] = { 0.22 };
-	double k2_CC[] = { 0.18 };
+	double* k1_CC = new double[1];
+	k1_CC[0] = 0.22;
+	double* k2_CC = new double[1];
+	k2_CC[0] = 0.18;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -853,15 +862,21 @@ PIDMRController get_PIDMR_controller() {
 		k2_CC
 	);
 
-	double k1_PIMR[] = { 1.0, 1.0, 1.0 };
-	double k2_PIMR[] = { 1.0, 1.0, 1.0 };
+	double* k1_PIDMR = new double[3];
+	k1_PIDMR[0] = 1.0;
+	k1_PIDMR[1] = 1.0;
+	k1_PIDMR[2] = 1.0;
+	double* k2_PIDMR = new double[3];
+	k2_PIDMR[0] = 1.0;
+	k2_PIDMR[1] = 1.0;
+	k2_PIDMR[2] = 1.0;
 	PIDMRController controller(
 		1.0,
 		1.0,
 		1.0,
 		0.85,
-		k1_PIMR,
-		k2_PIMR,
+		k1_PIDMR,
+		k2_PIDMR,
 		initial_controller
 	);
 	return controller;
