@@ -1,6 +1,6 @@
 **Adaptive HM Controllers**
 
-This is the public repository for the paper _Adaptive Time Step Control for Multirate Methods_ by Alex Fish and Daniel Reynolds.
+This is the public repository for the paper _Adaptive Time Step Control for Infinitesimal Multirate Methods_ by Alex Fish and Daniel Reynolds.
 
 # Requirements
 
