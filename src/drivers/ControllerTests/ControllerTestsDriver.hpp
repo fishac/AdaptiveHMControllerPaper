@@ -114,8 +114,8 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &CCcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-		double k1_LL[2] = { 0.94, 0.3 };
-		double k2_LL[2] = { 0.1, 0.56 };
+		double k1_LL[2] = { 0.82, 0.38 };
+		double k2_LL[2] = { 0.5, 0.88 };
 		LinearLinearController LLcontroller(
 			1.0,
 			1.0,
@@ -133,8 +133,8 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &LLcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-		double k1_PIMR[2] = { 0.94, 0.3 };
-		double k2_PIMR[2] = { 0.92, 0.94 };
+		double k1_PIMR[2] = { 0.88, 0.36 };
+		double k2_PIMR[2] = { 1.0, 0.58 };
 		PIMRController pimrcontroller(
 			1.0,
 			1.0,
@@ -152,8 +152,8 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &pimrcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-		double k1_PIDMR[3] = { 0.38, 0.9, 0.1 };
-		double k2_PIDMR[3] = { 0.56, 0.08, 0.76 };
+		double k1_PIDMR[3] = { 0.34, 0.94, 0.14 };
+		double k2_PIDMR[3] = { 0.34, 0.74, 0.42 };
 		PIDMRController pidmrcontroller(
 			1.0,
 			1.0,
