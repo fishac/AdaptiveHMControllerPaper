@@ -97,7 +97,7 @@ public:
 		);
 
 		double k1_CC[1] = { 0.22 };
-		double k2_CC[1] = { 0.44 };
+		double k2_CC[1] = { 0.18 };
 		ConstantConstantController CCcontroller(
 			1.0,
 			1.0,
