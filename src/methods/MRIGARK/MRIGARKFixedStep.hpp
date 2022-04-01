@@ -35,6 +35,7 @@ public:
 	int M;
 	int problem_dimension;
 	int num_stages;
+	bool useEmbedding;
 
 	MRIGARKFixedStep(MRIGARKCoefficients* coeffs_, SingleRateMethodCoefficients* inner_coeffs_, RHS* fast_func_, RHS* slow_func_, RHSJacobian* fast_func_jac_, RHSJacobian* slow_func_jac_, int problem_dimension_, WeightedErrorNorm* err_norm) :
 	inner_rhs_funcs(coeffs_, fast_func_, slow_func_, fast_func_jac_, slow_func_jac_, problem_dimension_),
@@ -48,6 +49,24 @@ public:
 		coeffs = coeffs_;
 		problem_dimension = problem_dimension_;
 		num_stages = coeffs_->num_stages;
+		useEmbedding = false;
+		
+		declare_vectors();
+	}
+	
+	MRIGARKFixedStep(MRIGARKCoefficients* coeffs_, SingleRateMethodCoefficients* inner_coeffs_, RHS* fast_func_, RHS* slow_func_, RHSJacobian* fast_func_jac_, RHSJacobian* slow_func_jac_, int problem_dimension_, WeightedErrorNorm* err_norm, bool useEmbedding_) :
+	inner_rhs_funcs(coeffs_, fast_func_, slow_func_, fast_func_jac_, slow_func_jac_, problem_dimension_),
+	implicit_residual(&(MRIGARKFixedStep::inner_rhs_funcs)),
+	implicit_residual_jacobian(&(MRIGARKFixedStep::inner_rhs_funcs)),
+	explicit_rhs(&(MRIGARKFixedStep::inner_rhs_funcs)),
+	explicit_rhs_jacobian(&(MRIGARKFixedStep::inner_rhs_funcs)),
+	dirk(inner_coeffs_, &(MRIGARKFixedStep::explicit_rhs), &(MRIGARKFixedStep::explicit_rhs_jacobian), problem_dimension_, err_norm),
+	newton_solver(&(MRIGARKFixedStep::implicit_residual), &(MRIGARKFixedStep::implicit_residual_jacobian), 20, 1.0, problem_dimension_, err_norm)
+	{
+		coeffs = coeffs_;
+		problem_dimension = problem_dimension_;
+		num_stages = coeffs_->num_stages;
+		useEmbedding = useEmbedding_;
 		
 		declare_vectors();
 	}
@@ -56,6 +75,9 @@ public:
 		y_stages.col(0) = *y_prev;
 		for(int stage_index=1; stage_index<num_stages; stage_index++) {
 			inner_rhs_funcs.set_function_dependent_data(H, t, stage_index, false);
+			if (stage_index == num_stages-1 && useEmbedding) {
+				inner_rhs_funcs.set_function_dependent_data(H, t, stage_index, true);
+			}
 			v_0 = y_stages.col(stage_index-1);
 
 			double gbar = inner_rhs_funcs.gamma_bar(stage_index,stage_index);

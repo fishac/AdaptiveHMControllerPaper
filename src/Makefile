@@ -12,8 +12,12 @@ INCS = -I ./common \
 -I ./controllers \
 -I ./drivers/OptimalitySearch \
 -I ./drivers/MeasurementTests \
--I ./drivers/ControllerTests 
+-I ./drivers/ControllerTests \
+-I ./drivers/FixedStep 
 
+GenericFixedDriver.exe : ./drivers/FixedStep/GenericFixedDriver.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS) $(INCS)
+	
 GenericControllerTestsDriver.exe : ./drivers/ControllerTests/GenericControllerTestsDriver.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS) $(INCS)
 
