@@ -3,11 +3,21 @@
 #include <math.h>
 
 #include "BicouplingProblem.hpp"
+#include "BicouplingLNProblem.hpp"
+#include "BicouplingDLProblem.hpp"
 #include "BrusselatorProblem.hpp"
+#include "BrusselatorDLProblem.hpp"
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
+#include "KapsLNProblem.hpp"
+#include "KapsDLProblem.hpp"
 #include "KPRProblem.hpp"
-#include "ForcedVanderPolProblem.hpp"
+#include "KPRDLProblem.hpp"
+#include "LienardProblem.hpp"
+#include "LienardLNProblem.hpp"
+#include "LienardDLProblem.hpp"
+#include "OregonatorProblem.hpp"
+#include "OregonatorDLProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "MeasurementTestsDriver.hpp"
@@ -33,7 +43,7 @@ mat get_true_sol(vec* output_tspan, Problem* problem) {
 		double t = 0.0;
 		for(int it=0; it<output_tspan->n_elem; it++) {
 			t = (*output_tspan)(it);
-			(problem->true_solution).evaluate(t, &y_true);
+			problem->true_solution(t, &y_true);
 			Y_true.col(it) = y_true;
 		}
 		return Y_true;
@@ -69,8 +79,17 @@ int main(int argc, char* argv[]) {
 		if(strcmp("Bicoupling",input_problem_name) == 0) {
 			BicouplingProblem problem;
 			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("BicouplingLN",input_problem_name) == 0) {
+			BicouplingLNProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("BicouplingDL",input_problem_name) == 0) {
+			BicouplingDLProblem problem;
+			setup_and_run(&problem, tol, tol_string);
 		} else if(strcmp("Brusselator",input_problem_name) == 0) {
 			BrusselatorProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("BrusselatorDL",input_problem_name) == 0) {
+			BrusselatorDLProblem problem;
 			setup_and_run(&problem, tol, tol_string);
 		} else if(strcmp("FourBody3d",input_problem_name) == 0) {
 			FourBody3dProblem problem;
@@ -78,11 +97,32 @@ int main(int argc, char* argv[]) {
 		} else if(strcmp("Kaps",input_problem_name) == 0) {
 			KapsProblem problem;
 			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("KapsLN",input_problem_name) == 0) {
+			KapsLNProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("KapsDL",input_problem_name) == 0) {
+			KapsDLProblem problem;
+			setup_and_run(&problem, tol, tol_string);
 		} else if(strcmp("KPR",input_problem_name) == 0) {
 			KPRProblem problem;
 			setup_and_run(&problem, tol, tol_string);
-		} else if(strcmp("ForcedVanderPol",input_problem_name) == 0) {
-			ForcedVanderPolProblem problem;
+		} else if(strcmp("KPRDL",input_problem_name) == 0) {
+			KPRDLProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("Lienard",input_problem_name) == 0) {
+			LienardProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("LienardLN",input_problem_name) == 0) {
+			LienardLNProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("LienardDL",input_problem_name) == 0) {
+			LienardDLProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("Oregonator",input_problem_name) == 0) {
+			OregonatorProblem problem;
+			setup_and_run(&problem, tol, tol_string);
+		} else if(strcmp("OregonatorDL",input_problem_name) == 0) {
+			OregonatorDLProblem problem;
 			setup_and_run(&problem, tol, tol_string);
 		} else if(strcmp("Pleiades",input_problem_name) == 0) {
 			PleiadesProblem problem;

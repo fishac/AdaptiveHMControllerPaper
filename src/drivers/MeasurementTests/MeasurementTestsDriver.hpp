@@ -13,7 +13,7 @@
 #include "SingleRateMethodCoefficients.hpp"
 #include "HeunEulerERKCoefficients.hpp"
 #include "BogackiShampineERKCoefficients.hpp"
-#include "DormandPrinceERKCoefficients.hpp"
+#include "ZonneveldERKCoefficients.hpp"
 #include "WeightedErrorNorm.hpp"
 #include "ConstantConstantController.hpp"
 #include "LinearLinearController.hpp"
@@ -96,8 +96,8 @@ public:
 			&err_norm
 		);
 
-		double k1_CC[1] = { 0.22 };
-		double k2_CC[1] = { 0.18 };
+		double k1_CC[1] = { 0.46 };
+		double k2_CC[1] = { 0.56 };
 		ConstantConstantController CCcontroller(
 			1.0,
 			1.0,
@@ -114,8 +114,18 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &CCcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-		double k1_LL[2] = { 0.82, 0.38 };
-		double k2_LL[2] = { 0.5, 0.88 };
+		double k1_CC_inner[1] = { 0.46 };
+		double k2_CC_inner[1] = { 0.56 };
+		ConstantConstantController CCcontroller_inner(
+			1.0,
+			1.0,
+			1.0,
+			0.85,
+			k1_CC_inner,
+			k2_CC_inner
+		);
+		double k1_LL[2] = { 0.7, 0.5 };
+		double k2_LL[2] = { 0.98, 0.96 };
 		LinearLinearController LLcontroller(
 			1.0,
 			1.0,
@@ -123,7 +133,7 @@ public:
 			0.85,
 			k1_LL,
 			k2_LL,
-			&CCcontroller
+			&CCcontroller_inner
 		);
 
 		run_single_mrigark_method(problem, &mrigark_method, &mrigarkerk33, &LLcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
@@ -133,9 +143,8 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &LLcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-
-		double k1_PIMR[2] = { 0.88, 0.36 };
-		double k2_PIMR[2] = { 1.0, 0.58 };
+		double k1_PIMR[2] = { 0.08, 0.82 };
+		double k2_PIMR[2] = { 0.14, 1.0 };
 		PIMRController pimrcontroller(
 			1.0,
 			1.0,
@@ -143,7 +152,7 @@ public:
 			0.85,
 			k1_PIMR,
 			k2_PIMR,
-			&CCcontroller
+			&CCcontroller_inner
 		);
 
 		run_single_mrigark_method(problem, &mrigark_method, &mrigarkerk33, &pimrcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
@@ -153,8 +162,8 @@ public:
 			run_single_mrigark_method(problem, &mrigark_method, &mrigarkesdirk34a, &pimrcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
 		}
 
-		double k1_PIDMR[3] = { 0.34, 0.94, 0.14 };
-		double k2_PIDMR[3] = { 0.34, 0.74, 0.42 };
+		double k1_PIDMR[3] = { 0.26, 0.1, 0.94 };
+		double k2_PIDMR[3] = { 0.7, 0.04, 0.92 };
 		PIDMRController pidmrcontroller(
 			1.0,
 			1.0,
@@ -162,7 +171,7 @@ public:
 			0.85,
 			k1_PIDMR,
 			k2_PIDMR,
-			&CCcontroller
+			&CCcontroller_inner
 		);
 
 		run_single_mrigark_method(problem, &mrigark_method, &mrigarkerk33, &pidmrcontroller, H_0, M_0, Y_true, output_tspan, &err_norm, tol_string);
@@ -173,7 +182,7 @@ public:
 		}
 	}
 
-	void run_single_mrigark_method(Problem* problem, MRIGARKAdaptiveMethod* method, MRIGARKCoefficients* coeffs, Controller* controller, double H_0, int M_0, mat* Y_true, vec* output_tspan, WeightedErrorNorm* err_norm, const char* tol_string) {
+	void run_single_mrigark_method(Problem* problem, MRIGARKAdaptiveMethod* method, MRICoefficients* coeffs, Controller* controller, double H_0, int M_0, mat* Y_true, vec* output_tspan, WeightedErrorNorm* err_norm, const char* tol_string) {
 		if (coeffs->primary_order == 1 || coeffs->primary_order == 2) {
 			HeunEulerERKCoefficients inner_coeffs;
 			run_single_mrigark_method_with_coeffs(problem, method, coeffs, &inner_coeffs, controller, H_0, M_0, Y_true, output_tspan, err_norm, tol_string);
@@ -181,19 +190,16 @@ public:
 			BogackiShampineERKCoefficients inner_coeffs;	
 			run_single_mrigark_method_with_coeffs(problem, method, coeffs, &inner_coeffs, controller, H_0, M_0, Y_true, output_tspan, err_norm, tol_string);
 		} else if (coeffs->primary_order == 4 || coeffs->primary_order == 5) {
-			DormandPrinceERKCoefficients inner_coeffs;
+			ZonneveldERKCoefficients inner_coeffs;
 			run_single_mrigark_method_with_coeffs(problem, method, coeffs, &inner_coeffs, controller, H_0, M_0, Y_true, output_tspan, err_norm, tol_string);
 		}
 	}
 
-	void run_single_mrigark_method_with_coeffs(Problem* problem, MRIGARKAdaptiveMethod* method, MRIGARKCoefficients* coeffs, SingleRateMethodCoefficients* inner_coeffs, Controller* controller, double H_0, int M_0, mat* Y_true, vec* output_tspan, WeightedErrorNorm* err_norm, const char* tol_string) {
+	void run_single_mrigark_method_with_coeffs(Problem* problem, MRIGARKAdaptiveMethod* method, MRICoefficients* coeffs, SingleRateMethodCoefficients* inner_coeffs, Controller* controller, double H_0, int M_0, mat* Y_true, vec* output_tspan, WeightedErrorNorm* err_norm, const char* tol_string) {
 		MRIGARKAdaptiveStepSlowMeasurement mrigark_step_sm(
 			coeffs, 
 			inner_coeffs, 
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian), 
-			&(problem->slow_rhsjacobian), 
+			problem,
 			problem->problem_dimension, 
 			err_norm
 		);
@@ -216,10 +222,7 @@ public:
 		MRIGARKAdaptiveStepFastMeasurement mrigark_step_fm(
 			coeffs, 
 			inner_coeffs, 
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian), 
-			&(problem->slow_rhsjacobian), 
+			problem,
 			problem->problem_dimension, 
 			err_norm
 		);

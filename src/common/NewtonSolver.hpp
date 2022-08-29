@@ -2,7 +2,6 @@
 #define NEWTONSOLVER_DEFINED__
 
 #include "Residual.hpp"
-#include "ResidualJacobian.hpp"
 #include "WeightedErrorNorm.hpp"
 
 using namespace arma;
@@ -14,8 +13,7 @@ struct NewtonSolverReturnValue {
 
 class NewtonSolver {
 public:
-	Residual* residual_func;
-	ResidualJacobian* residual_jacobian;
+	Residual* residual;
 	WeightedErrorNorm* err_norm;
 	vec y;
 	vec* y_prev;
@@ -30,9 +28,8 @@ public:
 	int problem_dimension;
 	int status = 0;
 
-	NewtonSolver(Residual* residual_func_, ResidualJacobian* residual_jacobian_, int max_iter_, double tol_, int problem_dimension_, WeightedErrorNorm* err_norm_) {
-		residual_func = residual_func_;
-		residual_jacobian = residual_jacobian_;
+	NewtonSolver(Residual* residual_, int max_iter_, double tol_, int problem_dimension_, WeightedErrorNorm* err_norm_) {
+		residual = residual_;
 		max_iter = max_iter_;
 		tol = tol_;
 		problem_dimension = problem_dimension_;
@@ -51,7 +48,7 @@ public:
 
 		err = tol + 1.0;
 		int iter = 0;
-		residual_func->evaluate_explicit_data(&explicit_data);
+		residual->evaluate_explicit_data(&explicit_data);
 		while(err > tol && iter < max_iter) {
 			if (status == 0) {
 				calculate_subtraction_term(t);
@@ -72,8 +69,8 @@ public:
 	}
 
 	void calculate_subtraction_term(double t) {
-		residual_func->evaluate(t, &explicit_data, y_prev, &y, &f);
-		residual_jacobian->evaluate(t, &y, &jac);
+		residual->residual(t, &explicit_data, y_prev, &y, &f);
+		residual->residual_jacobian(t, &y, &jac);
 
 		if (arma::solve(subtraction_term, jac, f) == false) {
 			printf("Linear solver failure.\n");
