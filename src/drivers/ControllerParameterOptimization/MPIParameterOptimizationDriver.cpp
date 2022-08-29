@@ -9,7 +9,8 @@
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
 #include "KPRProblem.hpp"
-#include "ForcedVanderPolProblem.hpp"
+#include "LienardProblem.hpp"
+#include "OregonatorProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "MRIGARKERK33Coefficients.hpp"
@@ -18,7 +19,7 @@
 #include "MRIGARKESDIRK34aCoefficients.hpp"
 #include "HeunEulerERKCoefficients.hpp"
 #include "BogackiShampineERKCoefficients.hpp"
-#include "DormandPrinceERKCoefficients.hpp"
+#include "ZonneveldERKCoefficients.hpp"
 #include "WeightedErrorNorm.hpp"
 #include "ConstantConstantController.hpp"
 #include "LinearConstantController.hpp"
@@ -29,6 +30,7 @@
 #include "MRIGARKAdaptiveMethod.hpp"
 #include "MRIGARKAdaptiveStepSlowMeasurement.hpp"
 #include "MRIGARKAdaptiveStepFastMeasurement.hpp"
+#include "FastErrorMeasurementTypes.hpp"
 
 using namespace std;
 using namespace arma;
@@ -57,7 +59,7 @@ QuadraticQuadraticController get_QQ_controller();
 PIDMRController get_PIDMR_controller();
 
 std::map<std::string, optimal_stats> read_optimal_data(Problem** problem_array, int n_problem, 
-	MRIGARKCoefficients** coeff_array, int n_mri, 
+	MRICoefficients** coeff_array, int n_mri, 
 	std::string* tol_string_array, int n_tol);
 
 void drive_optimization(int n_param, int n_procs);
@@ -65,14 +67,14 @@ void evaluate_parameter_space(double** param_space, int n_points_total, int n_pa
 		double* min_objective_func_value, double* argmin_point);
 void shut_down_workers(int n_param, int n_procs);
 
-void setup_and_evaluate_parameter_points(const char* controller_name, int n_param);
+void setup_and_evaluate_parameter_points(const char* controller_name, int n_param, std::string measurement_types, std::string method_types);
 void evaluate_parameter_points(Problem** problem_array, int n_problem, 
-	MRIGARKCoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, int n_mri, 
+	MRICoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, int n_mri, 
 	double* tol_array, std::string* tol_string_array, int n_tol, 
 	const char** measurement_type_array, int n_esf_mt,
 	Controller* controller, int n_param, 
 	std::map<std::string, optimal_stats>& optimal_data);
-double evaluate_parameter_point(Problem** problem_array, int n_problem, MRIGARKCoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, 
+double evaluate_parameter_point(Problem** problem_array, int n_problem, MRICoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, 
 	int n_mri, double* tol_array, std::string* tol_string_array, int n_tol, const char** measurement_type_array, int n_esf_mt,
 	Controller* controller, int n_param, std::map<std::string,optimal_stats>& optimal_data, double* point, int myid);
 
@@ -83,17 +85,26 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	if(argc != 2) {
+	if(argc != 4) {
 		printf("Error: Requires 1 command-line argument.\n");
-		printf("Ex: mpiexec -n <n_procs> ./exe/MPIParameterOptimizationDriver.exe <Controller>\n"); 
+		printf("Ex: mpiexec -n <n_procs> ./exe/MPIParameterOptimizationDriver.exe <Controller> <Measurement_Types> <Method_Types>\n"); 
+		printf("Ex: mpiexec -n <n_procs> ./exe/MPIParameterOptimizationDriver.exe <Controller> <all/FS/SA-mean/SA-max/LASA-mean/LASA-max> <all/explicit/implicit>\n"); 
+		printf("Ex: mpiexec -n 35 ./exe/MPIParameterOptimizationDriver.exe ConstantConstant LASA-mean all\n"); 
 		return 1;
 	} else {
 		const char* controller_name = argv[1];
+		std::string measurement_types(argv[2]);
+		std::string method_types(argv[3]);
+		
+		std::string measurement_types_all("all");
+		std::vector<std::string> method_types_options = { "all", "explicit", "implicit" };
 
 		int n_param, n_procs, my_id;
 
 		if(strcmp("ConstantConstant",controller_name) == 0) {
 			n_param = 2;
+		} else if(strcmp("LinearConstantIncomplete",controller_name) == 0) {
+			n_param = 3;
 		} else if(strcmp("LinearConstant",controller_name) == 0) {
 			n_param = 3;
 		} else if(strcmp("LinearLinear",controller_name) == 0) {
@@ -108,6 +119,16 @@ int main(int argc, char* argv[]) {
 			printf("Error: Did not recognize controller name: %s\n",controller_name);
 			return 1;
 		}
+		
+		if (!(measurement_types_all.compare(measurement_types) == 0 || std::find(FastError::types_strings.begin(), FastError::types_strings.end(), measurement_types) != FastError::types_strings.end())) {
+			std::cout << "Error: Did not recognize measurement type(s): " << measurement_types << std::endl;
+			return 1;
+		}
+		
+		if (std::find(method_types_options.begin(), method_types_options.end(), method_types) == method_types_options.end()) {
+			std::cout << "Error: Did not recognize method type(s): " << method_types << std::endl;
+			return 1;
+		}
 
 		ierr = MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
 		ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
@@ -115,7 +136,7 @@ int main(int argc, char* argv[]) {
 		if (my_id == 0) {
 			drive_optimization(n_param, n_procs);
 		} else {
-			setup_and_evaluate_parameter_points(controller_name, n_param);
+			setup_and_evaluate_parameter_points(controller_name, n_param, measurement_types, method_types);
 		}
 	}
 	MPI_Finalize();
@@ -264,53 +285,113 @@ void shut_down_workers(int n_param, int n_procs) {
 }
 
 // Worker setup function
-void setup_and_evaluate_parameter_points(const char* controller_name, int n_param) {
-
+void setup_and_evaluate_parameter_points(const char* controller_name, int n_param, std::string measurement_types, std::string method_types) {
+	// Set up problems
 	BicouplingProblem bicoupling_problem;
 	BrusselatorProblem brusselator_problem;
 	KapsProblem kaps_problem;
 	KPRProblem kpr_problem;
-	ForcedVanderPolProblem forcedvanderpol_problem;
+	LienardProblem lienard_problem;
 	PleiadesProblem pleiades_problem;
 	FourBody3dProblem fourbody3d_problem;
-
-	Problem* problem_array[] = { 
-		&bicoupling_problem, &brusselator_problem, &kaps_problem,
-		&kpr_problem, &forcedvanderpol_problem, &pleiades_problem, 
-		&fourbody3d_problem
-	};
-	int n_problem = 7;
-
+	
+	Problem* problem_array[7];
+	int n_problem;
+	
+	// Set up inner solvers
 	BogackiShampineERKCoefficients bogacki_shampine;
 	HeunEulerERKCoefficients heun_euler;
-	DormandPrinceERKCoefficients dormand_prince;
-
-	SingleRateMethodCoefficients* inner_coeff_array[] = { 
-		&bogacki_shampine,
-		&heun_euler,
-		&dormand_prince,
-		&bogacki_shampine
-	};
-
+	ZonneveldERKCoefficients zonneveld;
+	
+	SingleRateMethodCoefficients* inner_coeff_array[4];
+	
+	// Set up MRI solvers
 	MRIGARKERK33Coefficients mrigarkerk33;
 	MRIGARKIRK21aCoefficients mrigarkirk21a;
 	MRIGARKERK45aCoefficients mrigarkerk45a;
 	MRIGARKESDIRK34aCoefficients mrigarkesdirk34a;
-
-	MRIGARKCoefficients* coeff_array[] = {
-		&mrigarkerk33,
-		&mrigarkirk21a,
-		&mrigarkerk45a,
-		&mrigarkesdirk34a
-	};
-	int n_mri = 4;
-
+	
+	MRICoefficients* coeff_array[4];
+	int n_mri;
+	
+	// Set up measurement type(s)
+	const char* measurement_type_array[5];
+	int n_esf_mt;
+	
+	// Set up tolerances
 	double tol_array[] = { 1e-3, 1e-5, 1e-7 };
 	std::string tol_string_array[] = { "1e-3", "1e-5", "1e-7" };
 	int n_tol = 3;
+	
+	// Set up option constants
+	std::string method_type_all("all");
+	std::string method_type_explicit("explicit");
+	std::string method_type_implicit("implicit");
+	std::string measurement_type_all("all");
+	
+	// Set up options-based data
+	if (method_type_all.compare(method_types) == 0 || method_type_explicit.compare(method_types) == 0) {
+		//printf("all or explicit method types\n");
+		problem_array[0] = &bicoupling_problem;
+		problem_array[1] = &brusselator_problem; 
+		problem_array[2] = &kaps_problem;
+		problem_array[3] = &kpr_problem;
+		problem_array[4] = &lienard_problem;
+		problem_array[5] = &pleiades_problem; 
+		problem_array[6] = &fourbody3d_problem;
+		n_problem = 7;
+	} else if (method_type_implicit.compare(method_types) == 0) {
+		//printf("implicit method types\n");
+		problem_array[0] = &bicoupling_problem;
+		problem_array[1] = &brusselator_problem; 
+		problem_array[2] = &kaps_problem;
+		problem_array[3] = &kpr_problem;
+		problem_array[4] = &lienard_problem;
+		n_problem = 5;
+	}
+	
+	if (method_type_all.compare(method_types) == 0) {
+		//printf("all method types\n");
+		coeff_array[0] = &mrigarkerk33;
+		coeff_array[1] = &mrigarkirk21a;
+		coeff_array[2] = &mrigarkerk45a;
+		coeff_array[3] = &mrigarkesdirk34a;
+		
+		inner_coeff_array[0] = &bogacki_shampine;
+		inner_coeff_array[1] = &heun_euler;
+		inner_coeff_array[2] = &zonneveld;
+		inner_coeff_array[3] = &bogacki_shampine;
+			
+		n_mri = 4;
+	} else if (method_type_explicit.compare(method_types) == 0) {
+		//printf("explicit method types\n");
+		coeff_array[0] = &mrigarkerk33;
+		coeff_array[1] = &mrigarkerk45a;
+		inner_coeff_array[0] = &bogacki_shampine;
+		inner_coeff_array[1] = &zonneveld;
+		n_mri = 2;
+	} else if (method_type_implicit.compare(method_types) == 0) {
+		//printf("implicit method types\n");
+		coeff_array[0] = &mrigarkirk21a;
+		coeff_array[1] = &mrigarkesdirk34a;
+		inner_coeff_array[0] = &heun_euler;
+		inner_coeff_array[1] = &bogacki_shampine;
+		n_mri = 2;
+	}
 
-	const char** measurement_type_array = FastError::types;
-	int n_esf_mt = 5;
+	if (measurement_type_all.compare(measurement_types) == 0) {
+		//printf("all measurement types\n");
+		measurement_type_array[0] = FastError::types[0];
+		measurement_type_array[1] = FastError::types[1];
+		measurement_type_array[2] = FastError::types[2];
+		measurement_type_array[3] = FastError::types[3];
+		measurement_type_array[4] = FastError::types[4];
+		n_esf_mt = 5;
+	} else {
+		//printf("one measurement type\n");
+		measurement_type_array[0] = measurement_types.c_str();
+		n_esf_mt = 1;
+	}
 
 	// Read optimal data
 	std::map<std::string, optimal_stats> optimal_data = read_optimal_data(problem_array,n_problem,coeff_array,n_mri,tol_string_array,n_tol);
@@ -350,7 +431,7 @@ void setup_and_evaluate_parameter_points(const char* controller_name, int n_para
 
 // Worker main driver function
 void evaluate_parameter_points(Problem** problem_array, int n_problem, 
-	MRIGARKCoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, int n_mri, 
+	MRICoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, int n_mri, 
 	double* tol_array, std::string* tol_string_array, int n_tol, 
 	const char** measurement_type_array, int n_esf_mt,
 	Controller* controller, int n_param, 
@@ -389,7 +470,7 @@ void evaluate_parameter_points(Problem** problem_array, int n_problem,
 }
 
 // Worker evaluate function 
-double evaluate_parameter_point(Problem** problem_array, int n_problem, MRIGARKCoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, 
+double evaluate_parameter_point(Problem** problem_array, int n_problem, MRICoefficients** coeff_array, SingleRateMethodCoefficients** inner_coeff_array, 
 	int n_mri, double* tol_array, std::string* tol_string_array, int n_tol, const char** measurement_type_array, int n_esf_mt,
 	Controller* controller, int n_param, std::map<std::string,optimal_stats>& optimal_data, double* point, int myid) {
 	double objective_function_value = 0.0;
@@ -418,7 +499,10 @@ double evaluate_parameter_point(Problem** problem_array, int n_problem, MRIGARKC
 		copy_point(point,k1,3,0);
 		copy_point(point,k2,3,3);
 	}
+	// printf("Worker %d working on k1: %.2f %.2f %.2f, k2: %.2f %.2f %.2f\n",myid,k1[0],k1[1],k1[2],k2[0],k2[1],k2[2]);
 	controller->set_parameters(k1, k2);
+	
+	bool has_failed = false;
 
 	// Iterate over each problem
 	for(int i=0; i<n_problem; i++) {
@@ -446,66 +530,65 @@ double evaluate_parameter_point(Problem** problem_array, int n_problem, MRIGARKC
 			for (int k=0; k<n_tol; k++) {
 				// Iterate over each measurement_type
 				for (int l=0; l<n_esf_mt; l++) {
-					// This block must be in the inner loop.
-					std::string tol_string = tol_string_array[k];
-					vec atol = tol_array[k]*vec(problem_array[i]->problem_dimension,fill::ones);
-					double rtol = tol_array[k];
-					WeightedErrorNorm err_norm(&atol, rtol);
-					MRIGARKAdaptiveMethod mrigark_method(
-						problem_array[i],
-						problem_array[i]->problem_dimension,
-						&err_norm
-					);
-					std::string key = problem_name + "_" + method_name + "_" + tol_string;
-
-
-					AdaptiveMultiRateMethodReturnValue ret;
-					err_norm.reset_weights();
-					controller->reset();
-					if (FastError::is_slow_type(measurement_type_array[l])) {
-						MRIGARKAdaptiveStepSlowMeasurement mrigark_step_slow_measurement(
-							coeff_array[j], 
-							inner_coeff_array[j], 
-							&(problem_array[i]->fast_rhs), 
-							&(problem_array[i]->slow_rhs), 
-							&(problem_array[i]->fast_rhsjacobian), 
-							&(problem_array[i]->slow_rhsjacobian), 
+					if (!has_failed) {
+						// This block must be in the inner loop.
+						std::string tol_string = tol_string_array[k];
+						vec atol = tol_array[k]*vec(problem_array[i]->problem_dimension,fill::ones);
+						double rtol = tol_array[k];
+						WeightedErrorNorm err_norm(&atol, rtol);
+						MRIGARKAdaptiveMethod mrigark_method(
+							problem_array[i],
 							problem_array[i]->problem_dimension,
 							&err_norm
 						);
-						mrigark_method.solve(problem_array[i]->t_0, H_0, M_0, &(problem_array[i]->y_0), 
-							&output_tspan, &mrigark_step_slow_measurement, controller, measurement_type_array[l], false, 
-							&ret);
-					} else {
-						MRIGARKAdaptiveStepFastMeasurement mrigark_step_fast_measurement(
-							coeff_array[j], 
-							inner_coeff_array[j], 
-							&(problem_array[i]->fast_rhs), 
-							&(problem_array[i]->slow_rhs), 
-							&(problem_array[i]->fast_rhsjacobian), 
-							&(problem_array[i]->slow_rhsjacobian), 
-							problem_array[i]->problem_dimension,
-							&err_norm
-						);
-						mrigark_method.solve(problem_array[i]->t_0, H_0, M_0, &(problem_array[i]->y_0), 
-							&output_tspan, &mrigark_step_fast_measurement, controller, measurement_type_array[l], false, 
-							&ret);
-					}
+						std::string key = problem_name + "_" + method_name + "_" + tol_string;
 
-					if (ret.status == 0) {
-						mat Y = ret.Y;
-						double err = abs(Y_true-Y).max();
-						double cost = 10*problem_array[i]->slow_function_evals + problem_array[i]->slow_function_evals;
-						double optimal_cost = 10*optimal_data[key].slow_function_evals+optimal_data[key].fast_function_evals;
 
-						objective_function_value += cost/optimal_cost + 100.0*std::pow(log10(err/tol_array[k]),2.0);
-					} else {
-						objective_function_value += 1e10;
+						AdaptiveMultiRateMethodReturnValue ret;
+						err_norm.reset_weights();
+						controller->reset();
+						if (FastError::is_slow_type(measurement_type_array[l])) {
+							MRIGARKAdaptiveStepSlowMeasurement mrigark_step_slow_measurement(
+								coeff_array[j], 
+								inner_coeff_array[j], 
+								problem_array[i],
+								problem_array[i]->problem_dimension,
+								&err_norm
+							);
+							mrigark_method.solve(problem_array[i]->t_0, H_0, M_0, &(problem_array[i]->y_0), 
+								&output_tspan, &mrigark_step_slow_measurement, controller, measurement_type_array[l], false, 
+								&ret);
+						} else {
+							MRIGARKAdaptiveStepFastMeasurement mrigark_step_fast_measurement(
+								coeff_array[j], 
+								inner_coeff_array[j], 
+								problem_array[i],
+								problem_array[i]->problem_dimension,
+								&err_norm
+							);
+							mrigark_method.solve(problem_array[i]->t_0, H_0, M_0, &(problem_array[i]->y_0), 
+								&output_tspan, &mrigark_step_fast_measurement, controller, measurement_type_array[l], false, 
+								&ret);
+						}
+
+						if (ret.status == 0) {
+							mat Y = ret.Y;
+							double err = abs(Y_true-Y).max();
+							double err_dev = std::pow(log10(err/tol_array[k]),2.0);
+							double slow_dev = problem_array[i]->slow_function_evals/optimal_data[key].slow_function_evals;
+							double fast_dev = problem_array[i]->fast_function_evals/optimal_data[key].fast_function_evals;
+
+							objective_function_value += 10.0*slow_dev + fast_dev + 10.0*err_dev;
+						} else {
+							//std::cout << "Failure. Problem: " << problem_name << ", method: " << method_name << ", tol: " << tol_string << std::endl;
+							objective_function_value += 1e10;
+							has_failed = true;
+						}
+						problem_array[i]->reset_eval_counts();
 					}
-					problem_array[i]->reset_eval_counts();
 				}
 			}
-		}
+		} 
 	}
 	return objective_function_value;
 }
@@ -555,8 +638,7 @@ mat get_true_sol(vec* output_tspan, Problem& problem) {
 		double t = 0.0;
 		for(int it=0; it<output_tspan->n_elem; it++) {
 			t = (*output_tspan)(it);
-			(problem.
-				true_solution).evaluate(t, &y_true);
+			problem.true_solution(t, &y_true);
 			Y_true.col(it) = y_true;
 		}
 		return Y_true;
@@ -599,6 +681,14 @@ double** generate_parameter_space(double half_width, double* centers, double ste
 		}
 		param_ranges.push_back(param_range);
 	}
+
+	// DELETE THIS, JUST FOR VERIFICATION
+	//for (int i=0; i<n_points_1d; i++) {
+	//	for (int j=0; j<n_param; j++) {
+	//		printf("%.3f,",param_ranges[j][i]);
+	//	}
+	//	printf("\n");
+	//}
 
 	// Set total points in space
 	int n_points_total = 1;
@@ -643,11 +733,19 @@ double** generate_parameter_space(double half_width, double* centers, double ste
 		num_values_in_a_row = num_values_in_a_row*param_ranges[i].size();
 	}
 
+	// DELETE THIS, JUST FOR VERIFICATION
+	//for (int i=0; i<n_points_total; i++) {
+	//	for (int j=0; j<n_param; j++) {
+	//		printf("%.3f,",param_space[i][j]);
+	//	}
+	//	printf("\n");
+	//}
+
 	return param_space;
 };
 
 std::map<std::string, optimal_stats> read_optimal_data(Problem** problem_array, int n_problem, 
-	MRIGARKCoefficients** coeff_array, int n_mri, 
+	MRICoefficients** coeff_array, int n_mri, 
 	std::string* tol_string_array, int n_tol) {
 	std::map<std::string, optimal_stats> optimal_data_map;
 	std::string problem_name;
@@ -705,9 +803,9 @@ void copy_point(double* src, double* dest, int n, int src_offset) {
 
 ConstantConstantController get_CC_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController controller(
 		1.0,
 		1.0,
@@ -721,9 +819,9 @@ ConstantConstantController get_CC_controller() {
 
 LinearConstantController get_LC_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -752,9 +850,9 @@ LinearConstantController get_LC_controller() {
 
 LinearLinearController get_LL_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -784,9 +882,9 @@ LinearLinearController get_LL_controller() {
 
 PIMRController get_PIMR_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -816,9 +914,9 @@ PIMRController get_PIMR_controller() {
 
 QuadraticQuadraticController get_QQ_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,
@@ -850,9 +948,9 @@ QuadraticQuadraticController get_QQ_controller() {
 
 PIDMRController get_PIDMR_controller() {
 	double* k1_CC = new double[1];
-	k1_CC[0] = 0.22;
+	k1_CC[0] = 0.42;
 	double* k2_CC = new double[1];
-	k2_CC[0] = 0.18;
+	k2_CC[0] = 0.44;
 	ConstantConstantController* initial_controller = new ConstantConstantController(
 		1.0,
 		1.0,

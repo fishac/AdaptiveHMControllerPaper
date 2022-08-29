@@ -3,21 +3,34 @@
 
 #include "MultirateOptimalitySearchDriver.hpp"
 #include "BicouplingProblem.hpp"
+#include "BicouplingLNProblem.hpp"
+#include "BicouplingDLProblem.hpp"
 #include "BrusselatorProblem.hpp"
+#include "BrusselatorDLProblem.hpp"
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
+#include "KapsLNProblem.hpp"
+#include "KapsDLProblem.hpp"
 #include "KPRProblem.hpp"
-#include "ForcedVanderPolProblem.hpp"
+#include "KPRDLProblem.hpp"
+#include "LienardProblem.hpp"
+#include "LienardLNProblem.hpp"
+#include "LienardDLProblem.hpp"
+#include "OregonatorProblem.hpp"
+#include "OregonatorDLProblem.hpp"
 #include "PleiadesProblem.hpp"
+#include "Brusselator1DProblem.hpp"
 #include "Problem.hpp"
 #include "MRIGARKFixedMethod.hpp"
+#include "MRIGARKERK22aCoefficients.hpp"
 #include "MRIGARKERK33Coefficients.hpp"
 #include "MRIGARKIRK21aCoefficients.hpp"
 #include "MRIGARKERK45aCoefficients.hpp"
 #include "MRIGARKESDIRK34aCoefficients.hpp"
+#include "MERK32aCoefficients.hpp"
 #include "HeunEulerERKCoefficients.hpp"
 #include "BogackiShampineERKCoefficients.hpp"
-#include "DormandPrinceERKCoefficients.hpp"
+#include "ZonneveldERKCoefficients.hpp"
 #include "VernerERKCoefficients.hpp"
 #include "WeightedErrorNorm.hpp"
 
@@ -33,8 +46,7 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 	VernerERKCoefficients reference_coeffs;
 	FixedDIRKMethod reference_method(
 		&reference_coeffs,
-		&(problem->full_rhs),
-		&(problem->full_rhsjacobian),
+		problem,
 		problem->problem_dimension,
 		&err_norm
 	);
@@ -49,14 +61,26 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		MRIGARKFixedStep step(
 			&coeffs,
 			&inner_coeffs,
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian),
-			&(problem->slow_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
 		driver.run(problem, &method, &step, coeffs.name, tol_string, spf_string,&reference_method, &(problem->y_0), problem->t_0, problem->t_f, tol, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+	} else if(strcmp("MRIGARKERK22a",method_name) == 0) {
+		HeunEulerERKCoefficients inner_coeffs;
+		MRIGARKERK22aCoefficients coeffs;
+		MRIGARKFixedMethod method(
+			problem,
+			problem->problem_dimension
+		);
+		MRIGARKFixedStep step(
+			&coeffs,
+			&inner_coeffs,
+			problem,
+			problem->problem_dimension,
+			&err_norm
+		);
+		driver.run(problem, &method, &step, coeffs.name, tol_string, spf_string, &reference_method, &(problem->y_0), problem->t_0, problem->t_f, tol, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 	} else if(strcmp("MRIGARKIRK21a",method_name) == 0) {
 		HeunEulerERKCoefficients inner_coeffs;
 		MRIGARKIRK21aCoefficients coeffs;
@@ -67,16 +91,13 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		MRIGARKFixedStep step(
 			&coeffs,
 			&inner_coeffs,
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian),
-			&(problem->slow_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
 		driver.run(problem, &method, &step, coeffs.name, tol_string, spf_string, &reference_method, &(problem->y_0), problem->t_0, problem->t_f, tol, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 	} else if(strcmp("MRIGARKERK45a",method_name) == 0) {
-		HeunEulerERKCoefficients inner_coeffs;
+		ZonneveldERKCoefficients inner_coeffs;
 		MRIGARKERK45aCoefficients coeffs;
 		MRIGARKFixedMethod method(
 			problem,
@@ -85,10 +106,7 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		MRIGARKFixedStep step(
 			&coeffs,
 			&inner_coeffs,
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian),
-			&(problem->slow_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
@@ -103,10 +121,22 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		MRIGARKFixedStep step(
 			&coeffs,
 			&inner_coeffs,
-			&(problem->fast_rhs), 
-			&(problem->slow_rhs), 
-			&(problem->fast_rhsjacobian),
-			&(problem->slow_rhsjacobian),
+			problem,
+			problem->problem_dimension,
+			&err_norm
+		);
+		driver.run(problem, &method, &step, coeffs.name, tol_string, spf_string, &reference_method, &(problem->y_0), problem->t_0, problem->t_f, tol, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+	} else if(strcmp("MERK32a",method_name) == 0) {
+		BogackiShampineERKCoefficients inner_coeffs;
+		MERK32aCoefficients coeffs;
+		MRIGARKFixedMethod method(
+			problem,
+			problem->problem_dimension
+		);
+		MRIGARKFixedStep step(
+			&coeffs,
+			&inner_coeffs,
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
@@ -148,8 +178,17 @@ int main(int argc, char* argv[]) {
 		if(strcmp("Bicoupling",problem_name) == 0) {
 			BicouplingProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("BicouplingLN",problem_name) == 0) {
+			BicouplingLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("BicouplingDL",problem_name) == 0) {
+			BicouplingDLProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("Brusselator",problem_name) == 0) {
 			BrusselatorProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("BrusselatorDL",problem_name) == 0) {
+			BrusselatorDLProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("FourBody3d",problem_name) == 0) {
 			FourBody3dProblem problem;
@@ -157,14 +196,38 @@ int main(int argc, char* argv[]) {
 		} else if(strcmp("Kaps",problem_name) == 0) {
 			KapsProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("KapsLN",problem_name) == 0) {
+			KapsLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("KapsDL",problem_name) == 0) {
+			KapsDLProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("KPR",problem_name) == 0) {
 			KPRProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
-		} else if(strcmp("ForcedVanderPol",problem_name) == 0) {
-			ForcedVanderPolProblem problem;
+		} else if(strcmp("KPRDL",problem_name) == 0) {
+			KPRDLProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("Lienard",problem_name) == 0) {
+			LienardProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("LienardLN",problem_name) == 0) {
+			LienardLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("LienardDL",problem_name) == 0) {
+			LienardDLProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("Oregonator",problem_name) == 0) {
+			OregonatorProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("OregonatorDL",problem_name) == 0) {
+			OregonatorDLProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else if(strcmp("Pleiades",problem_name) == 0) {
 			PleiadesProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
+		} else if(strcmp("Brusselator1D",problem_name) == 0) {
+			Brusselator1DProblem problem(10);
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, spf_string, slow_penalty_factor, H_fine, H_tol, H_interval, M_max_iter, M_min_iter, eff_rtol);
 		} else {
 			printf("Error: Did not recognize problem name: %s\n", problem_name);

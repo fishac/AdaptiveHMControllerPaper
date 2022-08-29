@@ -3,6 +3,7 @@
 
 namespace FastError {
 	static const char* types[] = { "FS", "SA-mean", "SA-max", "LASA-mean", "LASA-max" };
+	std::vector<std::string> types_strings = { "FS", "SA-mean", "SA-max", "LASA-mean", "LASA-max" };
 	// "Slow" types because the error estimation happens primarily at the slow scale (the multirate method stages)
 	static const char* slow_types[] = { "FS", "SA-mean", "SA-max" };
 	// "Fast" types because the error estimation happens primarily at the fast scale (the inner method steps)

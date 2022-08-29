@@ -55,6 +55,7 @@ public:
 	}
 
 	void update_exponent_terms() {
+		
 		H_essnm2_pow = k1[0]/(3.0*P);
 		H_essnm1_pow = -(k1[0]+k1[1])/(3.0*P);
 		H_essn_pow = (k1[0]+k1[1]+k1[2])/(3.0*P);
@@ -69,6 +70,23 @@ public:
 		M_esfnm2_pow = -k2[0]/(3.0*p);
 		M_esfnm1_pow = (k2[0]+k2[1])/(3.0*p);
 		M_esfn_pow = -(k2[0]+k2[1]+k2[2])/(3.0*p);
+		
+		/*
+		H_essnm2_pow = k1[0]/(3.0*P);
+		H_essnm1_pow = (k1[0]+k1[1]-8.0)/(3.0*P);
+		H_essn_pow = -(k1[0]+k1[1]+k1[2]-17.0/2.0)/(3.0*P);
+
+		//printf("k1[0]: %.3f, k1[1]: %.3f, k1[2]: %.3f, P: %.0f\n",k1[0],k1[1],k1[2],P);
+		//printf("H_essnm2_pow: %.4f, H_essnm1_pow: %.4f, H_essn_pow: %.4f\n",H_essnm2_pow,H_essnm1_pow,H_essn_pow);
+		
+		M_essnm2_pow = -k1[0]*(1.0+p)/(3.0*P*p);
+		M_essnm1_pow = -(k1[0]+k1[1])*(1.0+p)/(3.0*P*p);
+		M_essn_pow = (k1[0]+k1[1]+k1[2])*(1.0+p)/(3.0*P*p);
+		
+		M_esfnm2_pow = k2[0]/(3.0*p);
+		M_esfnm1_pow = (k2[0]+k2[1])/(3.0*p);
+		M_esfn_pow = -(k2[0]+k2[1]+k2[2])/(3.0*p);
+		*/
 	}
 
 	double get_new_H() {

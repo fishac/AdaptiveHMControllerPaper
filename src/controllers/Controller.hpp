@@ -75,6 +75,25 @@ public:
 	virtual void set_tol(double tol_) {
 		tol = tol_;
 	}
+	
+	virtual void print_status() {
+		printf("H:\n");
+		for(double H : H_array) {
+			printf("\t%.16f\n",H);
+		}
+		printf("M:\n");
+		for(int M : M_array) {
+			printf("\t%d\n",M);
+		}
+		printf("err1:\n");
+		for(double err1 : err1_array) {
+			printf("\t%.16f\n",err1);
+		}
+		printf("err2:\n");
+		for(double err2 : err2_array) {
+			printf("\t%.16f\n",err2);
+		}
+	}
 };
 
 #endif

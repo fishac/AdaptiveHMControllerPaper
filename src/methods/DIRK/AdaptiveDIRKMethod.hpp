@@ -3,12 +3,11 @@
 
 #include "AdaptiveStepSingleRateMethod.hpp"
 #include "Residual.hpp"
-#include "ResidualJacobian.hpp"
 #include "NewtonSolver.hpp"
 #include "DIRKResidual.hpp"
-#include "DIRKResidualJacobian.hpp"
 #include "Controller.hpp"
 #include "Problem.hpp"
+#include <set>
 
 using namespace arma;
 using namespace std;
@@ -16,10 +15,7 @@ using namespace std;
 class AdaptiveDIRKMethod : AdaptiveStepSingleRateMethod {
 public:
 	SingleRateMethodCoefficients* coeffs;
-	RHS* rhsfunc;
-	RHSJacobian* rhsjac;
 	DIRKResidual dirk_residual;
-	DIRKResidualJacobian dirk_residual_jacobian;
 	NewtonSolver newton_solver;
 	struct NewtonSolverReturnValue newton_ret;
 	WeightedErrorNorm* err_norm;
@@ -44,15 +40,12 @@ public:
 	int newton_status = 0;
 	Problem* problem;
 
-	AdaptiveDIRKMethod(Problem* problem_, SingleRateMethodCoefficients* coeffs_, RHS* rhsfunc_, RHSJacobian* rhsjac_, int problem_dimension_, WeightedErrorNorm* err_norm_, bool is_top_level_) :
-	dirk_residual(coeffs_, rhsfunc_, problem_dimension_),
-	dirk_residual_jacobian(coeffs_, rhsjac_, problem_dimension_),
-	newton_solver(&(AdaptiveDIRKMethod::dirk_residual), &(AdaptiveDIRKMethod::dirk_residual_jacobian), 20, 0.1, problem_dimension_, err_norm_)
+	AdaptiveDIRKMethod(SingleRateMethodCoefficients* coeffs_, Problem* problem_, int problem_dimension_, WeightedErrorNorm* err_norm_, bool is_top_level_) :
+	dirk_residual(coeffs_, problem_, problem_dimension_),
+	newton_solver(&(AdaptiveDIRKMethod::dirk_residual), 20, 0.1, problem_dimension_, err_norm_)
 	{
 		problem = problem_;
 		coeffs = coeffs_;
-		rhsfunc = rhsfunc_;
-		rhsjac = rhsjac_;
 		problem_dimension = problem_dimension_;
 		err_norm = err_norm_;
 		is_top_level = is_top_level_;
@@ -197,7 +190,6 @@ public:
 		for(int stage_idx=0; stage_idx<coeffs->num_stages; stage_idx++) {
 			if (status == 0) {
 				dirk_residual.set_function_dependent_data(stage_idx);
-				dirk_residual_jacobian.set_function_dependent_data(stage_idx);
 
 				y_stage.zeros();
 				y_temp.zeros();
@@ -211,7 +203,7 @@ public:
 					y_temp = y + h*explicit_data;
 				}
 
-				rhsfunc->evaluate(t+(coeffs->c(stage_idx))*h,&y_temp,&y_stage);
+				problem->full_rhs(t+(coeffs->c(stage_idx))*h,&y_temp,&y_stage);
 				y_stages.col(stage_idx) = y_stage;
 			}
 		}
@@ -265,7 +257,6 @@ public:
 
 	void set_problem_dependent_data(double h_) {
 		dirk_residual.set_problem_dependent_data(h_);
-		dirk_residual_jacobian.set_problem_dependent_data(h_);
 		newton_solver.set_problem_dependent_data(h_);
 	}
 };

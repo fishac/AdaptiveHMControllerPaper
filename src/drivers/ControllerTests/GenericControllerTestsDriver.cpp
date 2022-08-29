@@ -3,11 +3,21 @@
 #include <math.h>
 
 #include "BicouplingProblem.hpp"
+#include "BicouplingLNProblem.hpp"
+#include "BicouplingDLProblem.hpp"
 #include "BrusselatorProblem.hpp"
+#include "BrusselatorDLProblem.hpp"
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
+#include "KapsLNProblem.hpp"
+#include "KapsDLProblem.hpp"
 #include "KPRProblem.hpp"
-#include "ForcedVanderPolProblem.hpp"
+#include "KPRDLProblem.hpp"
+#include "LienardProblem.hpp"
+#include "LienardLNProblem.hpp"
+#include "LienardDLProblem.hpp"
+#include "OregonatorProblem.hpp"
+#include "OregonatorDLProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "ControllerTestsDriver.hpp"
@@ -33,7 +43,7 @@ mat get_true_sol(vec* output_tspan, Problem* problem) {
 		double t = 0.0;
 		for(int it=0; it<output_tspan->n_elem; it++) {
 			t = (*output_tspan)(it);
-			(problem->true_solution).evaluate(t, &y_true);
+			problem->true_solution(t, &y_true);
 			Y_true.col(it) = y_true;
 		}
 		return Y_true;
@@ -42,7 +52,7 @@ mat get_true_sol(vec* output_tspan, Problem* problem) {
 	}
 }
 
-void setup_and_run(Problem* problem, double tol, const char* tol_string) {
+void setup_and_run(Problem* problem, double tol, const char* tol_string, bool allow_explicit, bool allow_implicit) {
 	ControllerTestsDriver driver;
 	double H_0 = problem->default_H*std::pow(2,-5.0);
 	int M_0 = 10;
@@ -52,12 +62,14 @@ void setup_and_run(Problem* problem, double tol, const char* tol_string) {
 	mat Y_true = get_true_sol(&output_tspan, problem);
 
 	printf("\n%s Problem.\n", problem->name);
-	driver.run(problem, H_0, M_0, &atol, rtol, &Y_true, &output_tspan, tol_string);
+	driver.run(problem, H_0, M_0, &atol, rtol, &Y_true, &output_tspan, tol_string, allow_explicit, allow_implicit);
 }
 
 int main(int argc, char* argv[]) {
-	if(argc != 3) {
-		printf("Error: Requires 2 command-line arguments. Ex: GenericControllerTestsDriver.exe <ProblemName> <tol>\n");
+	if(argc != 3 && argc != 4) {
+		printf("Error: Requires 2 or 3 command-line arguments.\n");
+		printf("Ex: GenericControllerTestsDriver.exe <ProblemName> <tol>\n");
+		printf("Ex: GenericControllerTestsDriver.exe <ProblemName> <tol> <all/explicit/implicit>\n");
 		return 1;
 	} else {
 		double tol = 0.0;
@@ -65,28 +77,72 @@ int main(int argc, char* argv[]) {
 		const char* input_problem_name = argv[1];
 		const char* tol_string = argv[2];
 		sscanf(argv[2], "%lf", &tol);
+		
+		bool allow_explicit;
+		if (argc == 3) {
+			allow_explicit = true; 
+		} else if (argc == 4) {
+			allow_explicit = strcmp("all",argv[3]) == 0 || strcmp("explicit",argv[3]) == 0;
+		}
+		
+		bool allow_implicit;
+		if (argc == 3) {
+			allow_implicit = true; 
+		} else if (argc == 4) {
+			allow_implicit = strcmp("all",argv[3]) == 0 || strcmp("implicit",argv[3]) == 0;
+		}
 
 		if(strcmp("Bicoupling",input_problem_name) == 0) {
 			BicouplingProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("BicouplingLN",input_problem_name) == 0) {
+			BicouplingLNProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("BicouplingDL",input_problem_name) == 0) {
+			BicouplingDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else if(strcmp("Brusselator",input_problem_name) == 0) {
 			BrusselatorProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("BrusselatorDL",input_problem_name) == 0) {
+			BrusselatorDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else if(strcmp("FourBody3d",input_problem_name) == 0) {
 			FourBody3dProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else if(strcmp("Kaps",input_problem_name) == 0) {
 			KapsProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("KapsLN",input_problem_name) == 0) {
+			KapsLNProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("KapsDL",input_problem_name) == 0) {
+			KapsDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else if(strcmp("KPR",input_problem_name) == 0) {
 			KPRProblem problem;
-			setup_and_run(&problem, tol, tol_string);
-		} else if(strcmp("ForcedVanderPol",input_problem_name) == 0) {
-			ForcedVanderPolProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("KPRDL",input_problem_name) == 0) {
+			KPRDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("Lienard",input_problem_name) == 0) {
+			LienardProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("LienardLN",input_problem_name) == 0) {
+			LienardLNProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("LienardDL",input_problem_name) == 0) {
+			LienardDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("Oregonator",input_problem_name) == 0) {
+			OregonatorProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
+		} else if(strcmp("OregonatorDL",input_problem_name) == 0) {
+			OregonatorDLProblem problem;
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else if(strcmp("Pleiades",input_problem_name) == 0) {
 			PleiadesProblem problem;
-			setup_and_run(&problem, tol, tol_string);
+			setup_and_run(&problem, tol, tol_string, allow_explicit, allow_implicit);
 		} else {
 			printf("Error: Did not recognize problem name: %s\n", input_problem_name);
 			return 1;

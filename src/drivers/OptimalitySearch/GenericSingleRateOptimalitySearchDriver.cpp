@@ -3,16 +3,20 @@
 
 #include "SingleRateOptimalitySearchDriver.hpp"
 #include "BicouplingProblem.hpp"
+#include "BicouplingLNProblem.hpp"
 #include "BrusselatorProblem.hpp"
 #include "FourBody3dProblem.hpp"
 #include "KapsProblem.hpp"
+#include "KapsLNProblem.hpp"
 #include "KPRProblem.hpp"
-#include "ForcedVanderPolProblem.hpp"
+#include "LienardProblem.hpp"
+#include "LienardLNProblem.hpp"
+#include "OregonatorProblem.hpp"
 #include "PleiadesProblem.hpp"
 #include "Problem.hpp"
 #include "HeunEulerERKCoefficients.hpp"
 #include "BogackiShampineERKCoefficients.hpp"
-#include "DormandPrinceERKCoefficients.hpp"
+#include "ZonneveldERKCoefficients.hpp"
 #include "VernerERKCoefficients.hpp"
 #include "WeightedErrorNorm.hpp"
 
@@ -28,8 +32,7 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 	VernerERKCoefficients reference_coeffs;
 	FixedDIRKMethod reference_method(
 		&reference_coeffs,
-		&(problem->full_rhs),
-		&(problem->full_rhsjacobian),
+		problem,
 		problem->problem_dimension,
 		&err_norm
 	);
@@ -38,8 +41,7 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		HeunEulerERKCoefficients coeffs;
 		FixedDIRKMethod method(
 			&coeffs,
-			&(problem->full_rhs),
-			&(problem->full_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
@@ -48,18 +50,16 @@ void setup_and_run_with_problem(Problem* problem, const char* method_name, const
 		BogackiShampineERKCoefficients coeffs;
 		FixedDIRKMethod method(
 			&coeffs,
-			&(problem->full_rhs),
-			&(problem->full_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
 		driver.run(problem, &method, coeffs.name, tol_string, &reference_method, &(problem->y_0), problem->t_0, problem->t_f, tol, H_fine, H_tol, H_interval, eff_rtol);
-	} else if(strcmp("DormandPrinceERK",method_name) == 0) {
-		DormandPrinceERKCoefficients coeffs;
+	} else if(strcmp("ZonneveldERK",method_name) == 0) {
+		ZonneveldERKCoefficients coeffs;
 		FixedDIRKMethod method(
 			&coeffs,
-			&(problem->full_rhs),
-			&(problem->full_rhsjacobian),
+			problem,
 			problem->problem_dimension,
 			&err_norm
 		);
@@ -95,6 +95,9 @@ int main(int argc, char* argv[]) {
 		if(strcmp("Bicoupling",problem_name) == 0) {
 			BicouplingProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
+		} else if(strcmp("BicouplingLN",problem_name) == 0) {
+			BicouplingLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
 		} else if(strcmp("Brusselator",problem_name) == 0) {
 			BrusselatorProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
@@ -104,11 +107,20 @@ int main(int argc, char* argv[]) {
 		} else if(strcmp("Kaps",problem_name) == 0) {
 			KapsProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
+		} else if(strcmp("KapsLN",problem_name) == 0) {
+			KapsLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
 		} else if(strcmp("KPR",problem_name) == 0) {
 			KPRProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
-		} else if(strcmp("ForcedVanderPol",problem_name) == 0) {
-			ForcedVanderPolProblem problem;
+		} else if(strcmp("Lienard",problem_name) == 0) {
+			LienardProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
+		} else if(strcmp("LienardLN",problem_name) == 0) {
+			LienardLNProblem problem;
+			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
+		} else if(strcmp("Oregonator",problem_name) == 0) {
+			OregonatorProblem problem;
 			setup_and_run_with_problem(&problem, method_name, tol_string, tol, H_fine, H_tol, H_interval, eff_rtol);
 		} else if(strcmp("Pleiades",problem_name) == 0) {
 			PleiadesProblem problem;
